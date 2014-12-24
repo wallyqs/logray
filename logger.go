@@ -33,12 +33,55 @@ type loggerOutputWrapper struct {
 	Output Output
 }
 
+var (
+	// defaultOutputs defines a list of outputs that will be added to a newly
+	// created Logger.
+	defaultOutputs []*loggerOutputWrapper
+
+	// defaultOutputMutex handles locking around the array of default outputs to
+	// add to a new Logger.
+	defaultOutputMutex sync.RWMutex
+)
+
 // New returns a new Logger with the default configuration.
 func New() *Logger {
-	return &Logger{
+	defaultOutputMutex.RLock()
+	defer defaultOutputMutex.RUnlock()
+
+	logger := &Logger{
 		Fields:  make(map[string]interface{}),
-		outputs: make([]*loggerOutputWrapper, 0),
+		outputs: make([]*loggerOutputWrapper, len(defaultOutputs)),
 	}
+	copy(logger.outputs, defaultOutputs)
+
+	return logger
+}
+
+// AddDefaultOutput adds a new default output which will be used on newly
+// created Loggers.
+func AddDefaultOutput(uri string, classes ...LogClass) error {
+	// generate it
+	lo, err := createOutputWrapper(uri, classes)
+	if err != nil {
+		return err
+	}
+	if lo == nil {
+		return nil
+	}
+
+	// Lock the default outputs
+	defaultOutputMutex.Lock()
+	defer defaultOutputMutex.Unlock()
+	defaultOutputs = append(defaultOutputs, lo)
+	return nil
+}
+
+// ResetDefaultOutput clears all the previously defined default outputs for new
+// Loggers.
+func ResetDefaultOutput() {
+	defaultOutputMutex.Lock()
+	defaultOutputs = make([]*loggerOutputWrapper, 0)
+	defaultOutputMutex.Unlock()
 }
 
 // Clone returns a new Logger object and copies over the configuration and all
@@ -62,27 +105,16 @@ func (logger *Logger) Clone() *Logger {
 
 // AddOutput adds a new output for the Logger based on the provided URI.
 func (logger *Logger) AddOutput(uri string, classes ...LogClass) error {
-	// If the caller didn't give us any classes to configure then we do
-	// nothing. This can be either an error or not, and since it is just as easy
-	// either way we define this as being a no op rather than error condition.
-	if len(classes) == 0 {
-		return nil
-	}
-
-	// Generate the output wrapper or capture the cached one
-	ow, err := newOutput(uri)
+	// generate it
+	lo, err := createOutputWrapper(uri, classes)
 	if err != nil {
 		return err
 	}
-
-	// Combine the output classes into just one
-	class := NONE
-	for _, c := range classes {
-		class |= c
+	if lo == nil {
+		return nil
 	}
 
 	// Lock our outputs
-	lo := &loggerOutputWrapper{Class: class, Output: ow.Output}
 	logger.outputMutex.Lock()
 	defer logger.outputMutex.Unlock()
 	logger.outputs = append(logger.outputs, lo)
@@ -92,8 +124,36 @@ func (logger *Logger) AddOutput(uri string, classes ...LogClass) error {
 // ResetOutput clears all the previously defined outputs on the Logger.
 func (logger *Logger) ResetOutput() {
 	logger.outputMutex.Lock()
-	defer logger.outputMutex.Unlock()
 	logger.outputs = make([]*loggerOutputWrapper, 0)
+	logger.outputMutex.Unlock()
+}
+
+// createOutputWrapper generates a new loggerOutputWrapper based on the passed
+// parameters. It will return an error if it fails to generate the output. It
+// will return nil, nil if there are no classes specified.
+func createOutputWrapper(uri string, classes []LogClass) (*loggerOutputWrapper, error) {
+	// If the caller didn't give us any classes to configure then we do
+	// nothing. This can be either an error or not, and since it is just as easy
+	// either way we define this as being a no op rather than error condition.
+	if len(classes) == 0 {
+		return nil, nil
+	}
+
+	// Generate the output wrapper or capture the cached one
+	ow, err := newOutput(uri)
+	if err != nil {
+		return nil, err
+	}
+
+	// Combine the output classes into just one
+	class := NONE
+	for _, c := range classes {
+		class |= c
+	}
+
+	// generate the wrapper
+	lo := &loggerOutputWrapper{Class: class, Output: ow.Output}
+	return lo, nil
 }
 
 // ClearFields resets the Field on the Logger.
