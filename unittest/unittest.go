@@ -162,6 +162,6 @@ func SetupBuffer() *LogBuffer {
 	}
 	logray.ResetDefaultOutput()
 	logray.AddNewOutputFunc("logbuffer", newOutput)
-	logray.AddDefaultOutput("logbuffer", logray.ALL)
+	logray.AddDefaultOutput("logbuffer://", logray.ALL)
 	return b
 }
