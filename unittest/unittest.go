@@ -6,7 +6,6 @@ package unittest
 
 import (
 	"bytes"
-	"flag"
 	"fmt"
 	"io"
 	"net/url"
@@ -25,14 +24,6 @@ const (
 		"%class% category='%category%' context='%context%'] %message%" +
 		"%color:default%"
 )
-
-// Set via command line flag -log to allow unit tests to dump logs to a file,
-// rather than to stdout.
-var OutputFile = ""
-
-func init() {
-	flag.StringVar(&OutputFile, "log", "", "Specifies the log file for the test")
-}
 
 // Interface that matches both testing.T and testing.B.
 type Logger interface {
@@ -156,11 +147,7 @@ func (l *LogBuffer) DumpToFile(path string) {
 // clears them for the next test.
 func (l *LogBuffer) FinishTest(t Logger) {
 	if t.Failed() {
-		if OutputFile == "" {
-			l.DumpToStdout()
-		} else {
-			l.DumpToFile(OutputFile)
-		}
+		l.DumpToStdout()
 	}
 	l.Clear()
 }
