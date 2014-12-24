@@ -160,6 +160,7 @@ func SetupBuffer() *LogBuffer {
 	newOutput := func(u *url.URL) (logray.Output, error) {
 		return b, nil
 	}
+	logray.ResetCachedOutputs()
 	logray.ResetDefaultOutput()
 	logray.AddNewOutputFunc("logbuffer", newOutput)
 	logray.AddDefaultOutput("logbuffer://", logray.ALL)

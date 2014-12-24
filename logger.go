@@ -84,6 +84,14 @@ func ResetDefaultOutput() {
 	defaultOutputMutex.Unlock()
 }
 
+// ResetCachedOutputs clears all the cached outputs that were previously
+// instantiated.
+func ResetCachedOutputs() {
+	updateMutex.Lock()
+	defer updateMutex.Unlock()
+	lockedSetupOutputMap()
+}
+
 // Clone returns a new Logger object and copies over the configuration and all
 // fields along with it.
 func (logger *Logger) Clone() *Logger {
