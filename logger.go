@@ -92,6 +92,22 @@ func ResetCachedOutputs() {
 	lockedSetupOutputMap()
 }
 
+// ResetDefaultLogLevel can be used to reconfigure the existing default outputs
+// all be at a new log level.
+func ResetDefaultLogLevel(classes ...LogClass) {
+	// Combine the output classes into just one
+	class := NONE
+	for _, c := range classes {
+		class |= c
+	}
+
+	defaultOutputMutex.Lock()
+	for _, o := range defaultOutputs {
+		o.Class = class
+	}
+	defaultOutputMutex.Unlock()
+}
+
 // Clone returns a new Logger object and copies over the configuration and all
 // fields along with it.
 func (logger *Logger) Clone() *Logger {
