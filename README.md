@@ -18,4 +18,4 @@ At different places in the system, you care about different data related to log 
 
 ### Simple to use
 
-This library needed to be simple to use. So starting out, basically all you have have to do is write logger := logray.New() to start logging. (Note, perhaps writing to stdout by default should be added to the library). Want to add dields? You can write logger.SetField(key, value). Want to pass it further down where separate fields might be set? That's just logger2 := logger.Clone().
+This library needed to be simple to use. So starting out, basically all you have have to do is write logger := logray.New() to start logging. (Note, perhaps writing to stdout by default should be added to the library). Want to add fields? You can write logger.SetField(key, value). Want to pass it further down where separate fields might be set? That's just logger2 := logger.Clone().
