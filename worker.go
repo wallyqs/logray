@@ -22,7 +22,9 @@ func (b *backgroundFlusher) Process() {
 	defer b.logger.outputMutex.RUnlock()
 
 	for _, o := range b.logger.outputs {
-		o.OutputWrapper.Output.Flush()
+		if err := o.OutputWrapper.Output.Flush(); err != nil {
+			panic(err)
+		}
 	}
 	if b.updateChan != nil {
 		close(b.updateChan)
@@ -43,7 +45,9 @@ func (b *backgroundLineLogger) Process() {
 
 	for _, o := range b.logger.outputs {
 		if o.Class&b.lineData.Class == b.lineData.Class {
-			o.OutputWrapper.Output.Write(&b.lineData)
+			if err := o.OutputWrapper.Output.Write(&b.lineData); err != nil {
+				panic(err)
+			}
 		}
 	}
 }
