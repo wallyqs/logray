@@ -43,7 +43,9 @@ func (b *backgroundLineLogger) Process() {
 
 	for _, o := range b.logger.outputs {
 		if o.Class&b.lineData.Class == b.lineData.Class {
-			o.OutputWrapper.Output.Write(&b.lineData)
+			if err := o.OutputWrapper.Output.Write(&b.lineData); err != nil {
+				panic(err)
+			}
 		}
 	}
 }
