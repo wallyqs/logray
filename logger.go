@@ -46,8 +46,8 @@ var (
 
 // New returns a new Logger with the default configuration.
 func New() *Logger {
-	defaultOutputMutex.RLock()
-	defer defaultOutputMutex.RUnlock()
+	defaultOutputMutex.Lock()
+	defer defaultOutputMutex.Unlock()
 
 	logger := &Logger{
 		Fields:  make(map[string]interface{}),
@@ -115,10 +115,10 @@ func (logger *Logger) Clone() *Logger {
 	clone := &Logger{}
 
 	// copy the outputs
-	logger.outputMutex.RLock()
+	logger.outputMutex.Lock()
 	clone.outputs = make([]*loggerOutputWrapper, len(logger.outputs))
 	copy(clone.outputs, logger.outputs)
-	logger.outputMutex.RUnlock()
+	logger.outputMutex.Unlock()
 
 	// copy the fields
 	clone.Fields = make(map[string]interface{}, len(logger.Fields))
